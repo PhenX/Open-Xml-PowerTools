@@ -124,7 +124,6 @@ using OpenXmlPowerTools;
 using OpenXmlPowerTools.HtmlToWml;
 using OpenXmlPowerTools.HtmlToWml.CSS;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 
 namespace OpenXmlPowerTools.HtmlToWml
 {
@@ -1232,55 +1231,28 @@ namespace OpenXmlPowerTools.HtmlToWml
 
             try
             {
-                using (Font f = new Font(ff, (float)sz / 2f, fs))
-                {
-                    const TextFormatFlags tff = TextFormatFlags.NoPadding;
-                    var proposedSize = new Size(int.MaxValue, int.MaxValue);
-                    var sf = TextRenderer.MeasureText(runText, f, proposedSize, tff);
-                    // sf returns size in pixels
-                    return sf.Width / multiplier;
-                }
+                return MetricsGetter.GetTextWidth(ff, fs, sz, runText) / multiplier;
             }
             catch (ArgumentException)
             {
                 try
                 {
                     const FontStyle fs2 = FontStyle.Regular;
-                    using (Font f = new Font(ff, (float)sz / 2f, fs2))
-                    {
-                        const TextFormatFlags tff = TextFormatFlags.NoPadding;
-                        var proposedSize = new Size(int.MaxValue, int.MaxValue);
-                        var sf = TextRenderer.MeasureText(runText, f, proposedSize, tff);
-                        return sf.Width / multiplier;
-                    }
+                    return MetricsGetter.GetTextWidth(ff, fs2, sz, runText) / multiplier;
                 }
                 catch (ArgumentException)
                 {
                     const FontStyle fs2 = FontStyle.Bold;
                     try
                     {
-                        using (var f = new Font(ff, (float)sz / 2f, fs2))
-                        {
-                            const TextFormatFlags tff = TextFormatFlags.NoPadding;
-                            var proposedSize = new Size(int.MaxValue, int.MaxValue);
-                            var sf = TextRenderer.MeasureText(runText, f, proposedSize, tff);
-                            // sf returns size in pixels
-                            return sf.Width / multiplier;
-                        }
+                        return MetricsGetter.GetTextWidth(ff, fs2, sz, runText) / multiplier;
                     }
                     catch (ArgumentException)
                     {
                         // if both regular and bold fail, then get metrics for Times New Roman
                         // use the original FontStyle (in fs)
                         var ff2 = new FontFamily("Times New Roman");
-                        using (var f = new Font(ff2, (float)sz / 2f, fs))
-                        {
-                            const TextFormatFlags tff = TextFormatFlags.NoPadding;
-                            var proposedSize = new Size(int.MaxValue, int.MaxValue);
-                            var sf = TextRenderer.MeasureText(runText, f, proposedSize, tff);
-                            // sf returns size in pixels
-                            return sf.Width / multiplier;
-                        }
+                        return MetricsGetter.GetTextWidth(ff2, fs, sz, runText) / multiplier;
                     }
                 }
             }

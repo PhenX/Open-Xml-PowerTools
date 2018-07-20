@@ -18,6 +18,7 @@ Email: eric@ericwhite.com
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.IO.Packaging;
 using System.Linq;
@@ -114,6 +115,26 @@ namespace OpenXmlPowerTools
                 new XAttribute(H.FileType, "WordprocessingML"),
                 new XAttribute(H.Error, "Unknown error, metrics not determined"));
             return metrics;
+        }
+
+        public static int GetTextWidth(FontFamily ff, FontStyle fs, decimal sz, string text)
+        {
+            Image image = new Bitmap(1, 1);
+            var graphics = Graphics.FromImage(image);
+
+            try
+            {
+                using (var f = new Font(ff, (float)sz / 2f, fs))
+                {
+                    var proposedSize = new Size(int.MaxValue, int.MaxValue);
+                    var sf = graphics.MeasureString(text, f, proposedSize);
+                    return (int) sf.Width;
+                }
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         private static Uri FixUri(string brokenUri)

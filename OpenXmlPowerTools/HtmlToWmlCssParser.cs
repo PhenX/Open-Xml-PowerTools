@@ -810,7 +810,7 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
 
                     try
                     {
-                        KnownColor kc = (KnownColor)Enum.Parse(typeof(KnownColor), m_value, true);
+                        Color.FromName(m_value);
                         return true;
                     }
                     catch { }
@@ -837,9 +837,7 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
             {
                 try
                 {
-                    KnownColor kc = (KnownColor)Enum.Parse(typeof(KnownColor), m_value, true);
-                    Color c = Color.FromKnownColor(kc);
-                    return c;
+                    return Color.FromName(m_value);
                 }
                 catch { }
             }
@@ -1523,10 +1521,14 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
                         return false;
                     }
 
-                    KnownColor kc;
-                    if (Enum.TryParse(m_val, true, out kc))
+                    try
                     {
+                        Color.FromName(m_val);
                         return true;
+                    }
+                    catch
+                    {
+                        // This is not a named color
                     }
                 }
                 else if (m_type == CssTermType.Function)
@@ -1651,9 +1653,7 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
             {
                 try
                 {
-                    KnownColor kc = (KnownColor)Enum.Parse(typeof(KnownColor), m_val, true);
-                    Color c = Color.FromKnownColor(kc);
-                    return c;
+                    return Color.FromName(m_val);
                 }
                 catch { }
             }
