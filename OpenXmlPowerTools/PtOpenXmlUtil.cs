@@ -775,10 +775,6 @@ namespace OpenXmlPowerTools
                     }
                 }
             }
-            catch (OverflowException)
-            {
-                return 0;
-            }
 
             return (int) (w/dpi*1440m/multiplier + tabLength*1440m);
         }
