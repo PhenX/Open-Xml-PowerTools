@@ -5,6 +5,7 @@
     <GenerateBindingRedirectsOutputType>true</GenerateBindingRedirectsOutputType>
     <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
     <TargetFrameworks>net461;netcoreapp2.0</TargetFrameworks>
+    <LangVersion>6</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

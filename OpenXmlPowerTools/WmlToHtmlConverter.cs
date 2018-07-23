@@ -171,6 +171,8 @@ namespace OpenXmlPowerTools
 
     public static class WmlToHtmlConverter
     {
+        public const string DefaultCss = "p { position: relative; }";
+
         public static XElement ConvertToHtml(WmlDocument doc, WmlToHtmlConverterSettings htmlConverterSettings)
         {
             using (OpenXmlMemoryStreamDocument streamDoc = new OpenXmlMemoryStreamDocument(doc))
@@ -191,7 +193,7 @@ namespace OpenXmlPowerTools
                 RemoveContentControls = true,
                 RemoveEndAndFootNotes = true,
                 RemoveFieldCodes = false,
-                RemoveLastRenderedPageBreak = true,
+                RemoveLastRenderedPageBreak = false,
                 RemovePermissions = true,
                 RemoveProof = true,
                 RemoveRsidInfo = true,
@@ -359,7 +361,7 @@ namespace OpenXmlPowerTools
                     foreach (var gc in grp)
                         gc.Element.Add(classAtt);
                 }
-                var styleValue = htmlConverterSettings.GeneralCss + sb + htmlConverterSettings.AdditionalCss;
+                var styleValue = DefaultCss + htmlConverterSettings.GeneralCss + sb + htmlConverterSettings.AdditionalCss;
 
                 SetStyleElementValue(xhtml, styleValue);
             }
@@ -367,7 +369,7 @@ namespace OpenXmlPowerTools
             {
                 // Previously, the h:style element was not added at this point. However,
                 // at least the General CSS will contain important settings.
-                SetStyleElementValue(xhtml, htmlConverterSettings.GeneralCss + htmlConverterSettings.AdditionalCss);
+                SetStyleElementValue(xhtml, DefaultCss + htmlConverterSettings.GeneralCss + htmlConverterSettings.AdditionalCss);
 
                 foreach (var d in xhtml.DescendantsAndSelf())
                 {
@@ -443,6 +445,11 @@ namespace OpenXmlPowerTools
             if (element.Name == W.p)
             {
                 return ProcessParagraph(wordDoc, settings, element, suppressTrailingWhiteSpace, currentMarginLeft);
+            }
+
+            if (element.Name == MC.AlternateContent)
+            {
+                return ProcessAlternateContent(wordDoc, settings, element, suppressTrailingWhiteSpace, currentMarginLeft);
             }
 
             // Transform hyperlinks to the XHTML h:a element.
@@ -544,7 +551,7 @@ namespace OpenXmlPowerTools
             // Transform images
             if (element.Name == W.drawing || element.Name == W.pict || element.Name == W._object)
             {
-                return ProcessImage(wordDoc, element, settings.ImageHandler);
+                return ProcessImage(wordDoc, settings, element, settings.ImageHandler);
             }
 
             // Transform content controls.
@@ -774,6 +781,20 @@ namespace OpenXmlPowerTools
             }
 
             return paragraph;
+        }
+
+        private static object ProcessAlternateContent(WordprocessingDocument wordDoc, WmlToHtmlConverterSettings settings,
+            XElement element, bool suppressTrailingWhiteSpace, decimal currentMarginLeft)
+        {
+            return ProcessChoice(wordDoc, settings, element.Element(MC.Choice), suppressTrailingWhiteSpace,
+                currentMarginLeft);
+        }
+
+        private static object ProcessChoice(WordprocessingDocument wordDoc, WmlToHtmlConverterSettings settings,
+            XElement element, bool suppressTrailingWhiteSpace, decimal currentMarginLeft)
+        {
+            var e = element.Elements();
+            return ConvertToHtmlTransform(wordDoc, settings, e.First(), suppressTrailingWhiteSpace, currentMarginLeft);
         }
 
         private static object ProcessTable(WordprocessingDocument wordDoc, WmlToHtmlConverterSettings settings, XElement element, decimal currentMarginLeft)
@@ -3071,7 +3092,7 @@ namespace OpenXmlPowerTools
         };
 
 
-        public static XElement ProcessImage(WordprocessingDocument wordDoc,
+        public static XElement ProcessImage(WordprocessingDocument wordDoc, WmlToHtmlConverterSettings settings, 
             XElement element, Func<ImageInfo, XElement> imageHandler)
         {
             if (imageHandler == null)
@@ -3080,7 +3101,7 @@ namespace OpenXmlPowerTools
             }
             if (element.Name == W.drawing)
             {
-                return ProcessDrawing(wordDoc, element, imageHandler);
+                return ProcessDrawing(wordDoc, settings, element, imageHandler);
             }
             if (element.Name == W.pict || element.Name == W._object)
             {
@@ -3090,6 +3111,7 @@ namespace OpenXmlPowerTools
         }
 
         private static XElement ProcessDrawing(WordprocessingDocument wordDoc,
+            WmlToHtmlConverterSettings settings, 
             XElement element, Func<ImageInfo, XElement> imageHandler)
         {
             var containerElement = element.Elements()
@@ -3122,8 +3144,20 @@ namespace OpenXmlPowerTools
             var altText = (string)containerElement.Elements(WP.docPr).Attributes(NoNamespace.descr).FirstOrDefault() ??
                           ((string)containerElement.Elements(WP.docPr).Attributes(NoNamespace.name).FirstOrDefault() ?? "");
 
-            var blipFill = containerElement.Elements(A.graphic)
-                .Elements(A.graphicData)
+            var graphicData = containerElement.Elements(A.graphic)
+                .Elements(A.graphicData);
+
+            var wps = graphicData
+                .Elements(WPS.wsp).FirstOrDefault();
+
+            if (wps != null)
+            {
+                var posH = containerElement.Element(WP.positionH);
+                var posV = containerElement.Element(WP.positionV);
+                return ProcessWps(wordDoc, settings, wps, extentCx, extentCy, posH, posV);
+            }
+
+            var blipFill = graphicData
                 .Elements(Pic._pic).Elements(Pic.blipFill).FirstOrDefault();
             if (blipFill == null) return null;
 
@@ -3193,6 +3227,104 @@ namespace OpenXmlPowerTools
                 }
                 return imgElement;
             }
+        }
+
+        private static XElement ProcessWps(WordprocessingDocument wordDoc, 
+            WmlToHtmlConverterSettings settings, 
+            XElement wps, int? extentCx, int? extentCy, XElement posH, XElement posV)
+        {
+            var style = new List<string>
+            {
+                "position: absolute;",
+            };
+
+            if (extentCx != null)
+            {
+                style.Add(string.Format(NumberFormatInfo.InvariantInfo,
+                    "width: {0}in;", (float) extentCx / ImageInfo.EmusPerInch));
+            }
+
+            if (extentCy != null)
+            {
+                style.Add(string.Format(NumberFormatInfo.InvariantInfo,
+                    "height: {0}in;", (float) extentCy / ImageInfo.EmusPerInch));
+            }
+
+            if (posH != null)
+            {
+                var posOffset = posH.Element(WP.posOffset);
+                if (posOffset != null)
+                {
+                    style.Add(string.Format(NumberFormatInfo.InvariantInfo,
+                        "left: {0}in;", int.Parse(posOffset.Value) / ImageInfo.EmusPerInch));
+                }
+                else
+                {
+                    var align = posH.Element(WP.align)?.Value;
+                    if (align != null)
+                    {
+                        style.Add($"{align}: 0;");
+                    }
+                }
+            }
+
+            if (posV != null)
+            {
+                var posOffset = posV.Element(WP.posOffset);
+                if (posOffset != null)
+                {
+                    style.Add(string.Format(NumberFormatInfo.InvariantInfo,
+                        "top: {0}in;", int.Parse(posOffset.Value) / ImageInfo.EmusPerInch));
+                }
+                else
+                {
+                    var align = posV.Element(WP.align)?.Value;
+                    if (align != null)
+                    {
+                        style.Add($"{align}: 0;");
+                    }
+                }
+
+                var relativeFrom = posV.Attribute(NoNamespace.relativeFrom)?.Value;
+
+                if (relativeFrom == "margin")
+                {
+                    
+                }
+            }
+
+            var shapeProperties = wps.Element(WPS.spPr);
+
+            if (shapeProperties != null)
+            {
+                var fill = shapeProperties.Element(A.solidFill);
+                var col = fill?.Element(A.srgbClr)?.Attribute("val")?.Value;
+                if (col != null)
+                {
+                    style.Add($"background: #{col};");
+                }
+
+                var line = shapeProperties.Element(A.ln);
+                if (line != null)
+                {
+                    var w = float.Parse(line.Attribute("w")?.Value) / ImageInfo.EmusPerInch;
+
+                    var lineCol = line.Element(A.solidFill)?.Element(A.srgbClr);
+                    if (lineCol != null)
+                    {
+                        var v = lineCol.Attribute("val")?.Value;
+                        if (v != null)
+                        {
+                            style.Add(string.Format(NumberFormatInfo.InvariantInfo,
+                                "border: {0}in solid #{1};", w, v));
+                        }
+                    }
+                }
+            } 
+
+            return new XElement(Xhtml.div,
+                new XAttribute("style", string.Join("", style)),
+                ProcessParagraph(wordDoc, settings, wps.Element(WPS.txbx).Element(W.txbxContent).Element(W.p), false, 0));
         }
 
         private static XElement ProcessPictureOrObject(WordprocessingDocument wordDoc,
