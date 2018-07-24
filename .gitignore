@@ -37,5 +37,6 @@ TestResults/
 # Visual Studio
 .vs/
 
-# JetBrains Rider
+# JetBrains
 .idea/
+_ReSharper.Caches/
