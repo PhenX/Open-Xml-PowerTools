@@ -745,42 +745,9 @@ namespace OpenXmlPowerTools
                 runText = sb.ToString();
             }
 
-            int w;
-            const decimal dpi = 96m;
-            const FontStyle fs2 = FontStyle.Regular;
-            const FontStyle fs3 = FontStyle.Bold;
-            var ff2 = new FontFamily("Times New Roman");
+            var w = MetricsGetter.GetTextWidth(ff, fs, sz, runText);
 
-            try
-            {
-                w = MetricsGetter.GetTextWidth(ff, fs, sz, runText);
-            }
-            catch (ArgumentException)
-            {
-                try
-                {
-                    w = MetricsGetter.GetTextWidth(ff, fs2, sz, runText);
-                }
-                catch (ArgumentException)
-                {
-                    try
-                    {
-                        w = MetricsGetter.GetTextWidth(ff, fs3, sz, runText);
-                    }
-                    catch (ArgumentException)
-                    {
-                        // if both regular and bold fail, then get metrics for Times New Roman
-                        // use the original FontStyle (in fs)
-                        w = MetricsGetter.GetTextWidth(ff2, fs, sz, runText);
-                    }
-                }
-            }
-            catch (OverflowException)
-            {
-                return 0;
-            }
-
-            return (int) (w/dpi*1440m/multiplier + tabLength*1440m);
+            return (int) (w / 96m * 1440m / multiplier + tabLength * 1440m);
         }
 
         public static bool GetBoolProp(XElement runProps, XName xName)

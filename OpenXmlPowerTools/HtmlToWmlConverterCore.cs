@@ -1229,38 +1229,7 @@ namespace OpenXmlPowerTools.HtmlToWml
                 runText = sb.ToString();
             }
 
-            try
-            {
-                return MetricsGetter.GetTextWidth(ff, fs, sz, runText) / multiplier;
-            }
-            catch (ArgumentException)
-            {
-                try
-                {
-                    const FontStyle fs2 = FontStyle.Regular;
-                    return MetricsGetter.GetTextWidth(ff, fs2, sz, runText) / multiplier;
-                }
-                catch (ArgumentException)
-                {
-                    const FontStyle fs2 = FontStyle.Bold;
-                    try
-                    {
-                        return MetricsGetter.GetTextWidth(ff, fs2, sz, runText) / multiplier;
-                    }
-                    catch (ArgumentException)
-                    {
-                        // if both regular and bold fail, then get metrics for Times New Roman
-                        // use the original FontStyle (in fs)
-                        var ff2 = new FontFamily("Times New Roman");
-                        return MetricsGetter.GetTextWidth(ff2, fs, sz, runText) / multiplier;
-                    }
-                }
-            }
-            catch (OverflowException)
-            {
-                // This happened on Azure but interestingly enough not while testing locally.
-                return 0;
-            }
+            return MetricsGetter.GetTextWidth(ff, fs, sz, runText) / multiplier;
         }
 
         // The algorithm for this method comes from the implementer notes in [MS-OI29500].pdf

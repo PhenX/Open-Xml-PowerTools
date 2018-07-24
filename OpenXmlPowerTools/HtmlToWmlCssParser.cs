@@ -808,12 +808,10 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
                     }
                     if (number) { return false; }
 
-                    try
+                    if (ColorParser.IsValidName(m_value))
                     {
-                        Color.FromName(m_value);
                         return true;
                     }
-                    catch { }
                 }
                 return false;
             }
@@ -835,11 +833,11 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
             }
             else
             {
-                try
+                Color c;
+                if (ColorParser.TryFromName(m_value, out c))
                 {
-                    return Color.FromName(m_value);
+                    return c;
                 }
-                catch { }
             }
             int r = ConvertFromHex(hex.Substring(0, 2));
             int g = ConvertFromHex(hex.Substring(2, 2));
@@ -1521,14 +1519,9 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
                         return false;
                     }
 
-                    try
+                    if (ColorParser.IsValidName(m_val))
                     {
-                        Color.FromName(m_val);
                         return true;
-                    }
-                    catch
-                    {
-                        // This is not a named color
                     }
                 }
                 else if (m_type == CssTermType.Function)
@@ -1651,11 +1644,11 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
             }
             else
             {
-                try
+                Color c;
+                if (ColorParser.TryFromName(m_val, out c))
                 {
-                    return Color.FromName(m_val);
+                    return c;
                 }
-                catch { }
             }
             if (hex.Length == 3)
             {
