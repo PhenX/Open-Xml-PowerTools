@@ -793,8 +793,7 @@ namespace OpenXmlPowerTools
         private static object ProcessChoice(WordprocessingDocument wordDoc, WmlToHtmlConverterSettings settings,
             XElement element, bool suppressTrailingWhiteSpace, decimal currentMarginLeft)
         {
-            var e = element.Elements();
-            return ConvertToHtmlTransform(wordDoc, settings, e.First(), suppressTrailingWhiteSpace, currentMarginLeft);
+            return element.Elements().Select(e => ConvertToHtmlTransform(wordDoc, settings, e, suppressTrailingWhiteSpace, currentMarginLeft));
         }
 
         private static object ProcessTable(WordprocessingDocument wordDoc, WmlToHtmlConverterSettings settings, XElement element, decimal currentMarginLeft)
@@ -983,7 +982,7 @@ namespace OpenXmlPowerTools
 
         private static XName GetParagraphElementName(XElement element, WordprocessingDocument wordDoc)
         {
-            var elementName = Xhtml.p;
+            var elementName = Xhtml.div;
 
             var styleId = (string) element.Elements(W.pPr).Elements(W.pStyle).Attributes(W.val).FirstOrDefault();
             if (styleId == null) return elementName;
@@ -3201,7 +3200,8 @@ namespace OpenXmlPowerTools
         {
             var style = new List<string>
             {
-                "position: absolute;",
+                "position: relative;",
+                "display: inline-block;"
             };
 
             if (extentCx != null)
@@ -3222,7 +3222,7 @@ namespace OpenXmlPowerTools
                 if (posOffset != null)
                 {
                     style.Add(string.Format(NumberFormatInfo.InvariantInfo,
-                        "left: {0}in;", int.Parse(posOffset.Value) / ImageInfo.EmusPerInch));
+                        "left: {0}in;", float.Parse(posOffset.Value) / ImageInfo.EmusPerInch));
                 }
                 else
                 {
@@ -3240,7 +3240,7 @@ namespace OpenXmlPowerTools
                 if (posOffset != null)
                 {
                     style.Add(string.Format(NumberFormatInfo.InvariantInfo,
-                        "top: {0}in;", int.Parse(posOffset.Value) / ImageInfo.EmusPerInch));
+                        "top: {0}in;", float.Parse(posOffset.Value) / ImageInfo.EmusPerInch));
                 }
                 else
                 {
@@ -3288,9 +3288,19 @@ namespace OpenXmlPowerTools
                 }
             } 
 
-            return new XElement(Xhtml.div,
-                new XAttribute("style", string.Join("", style)),
-                ProcessParagraph(wordDoc, settings, wps.Element(WPS.txbx).Element(W.txbxContent).Element(W.p), false, 0));
+            var container = new XElement(Xhtml.div,
+                new XAttribute("style", string.Concat(style))
+            );
+
+            // Handle paragraph
+            var p = wps.Element(WPS.txbx)?.Element(W.txbxContent)?.Element(W.p);
+
+            if (p != null)
+            {
+                container.Add(ProcessParagraph(wordDoc, settings, p, false, 0));
+            }
+
+            return container;
         }
 
         private static XElement ProcessPictureOrObject(WordprocessingDocument wordDoc,
