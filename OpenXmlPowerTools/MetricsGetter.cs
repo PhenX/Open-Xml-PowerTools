@@ -40,18 +40,14 @@ namespace OpenXmlPowerTools
 
     public class MetricsGetter
     {
-        private static Graphics _graphics;
-        protected static Graphics Graphics
-        {
+        protected static Lazy<Graphics> Graphics {
             get
             {
-                if (_graphics != null)
+                return new Lazy<Graphics>(() =>
                 {
-                    return _graphics;
-                }
-
-                Image image = new Bitmap(1, 1);
-                return _graphics = Graphics.FromImage(image);
+                    Image image = new Bitmap(1, 1);
+                    return System.Drawing.Graphics.FromImage(image);
+                });
             }
         }
 
@@ -139,7 +135,7 @@ namespace OpenXmlPowerTools
                 using (var f = new Font(ff, (float)sz / 2f, fs))
                 {
                     var proposedSize = new Size(int.MaxValue, int.MaxValue);
-                    var sf = Graphics.MeasureString(text, f, proposedSize);
+                    var sf = Graphics.Value.MeasureString(text, f, proposedSize);
                     return (int) sf.Width;
                 }
             }

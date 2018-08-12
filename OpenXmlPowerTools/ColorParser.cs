@@ -29,14 +29,30 @@ namespace OpenXmlPowerTools
 
         public static bool TryFromName(string name, out Color color)
         {
-            color = Color.FromName(name);
+            try
+            {
+                color = Color.FromName(name);
 
-            return color.IsNamedColor;
+                return color.IsNamedColor;
+            }
+            catch
+            {
+                color = new Color();
+
+                return false;
+            }
         }
 
         public static bool IsValidName(string name)
         {
-            return Color.FromName(name).IsNamedColor;
+            try
+            {
+                return Color.FromName(name).IsNamedColor;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
