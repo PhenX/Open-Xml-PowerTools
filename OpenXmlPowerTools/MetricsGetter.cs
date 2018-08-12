@@ -40,16 +40,11 @@ namespace OpenXmlPowerTools
 
     public class MetricsGetter
     {
-        private static Lazy<Graphics> Graphics {
-            get
-            {
-                return new Lazy<Graphics>(() =>
-                {
-                    Image image = new Bitmap(1, 1);
-                    return System.Drawing.Graphics.FromImage(image);
-                });
-            }
-        }
+        private static Lazy<Graphics> Graphics { get; } = new Lazy<Graphics>(() =>
+        {
+            Image image = new Bitmap(1, 1);
+            return System.Drawing.Graphics.FromImage(image);
+        });
 
         public static XElement GetMetrics(string fileName, MetricsGetterSettings settings)
         {
