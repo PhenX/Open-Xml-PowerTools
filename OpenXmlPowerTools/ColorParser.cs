@@ -37,7 +37,7 @@ namespace OpenXmlPowerTools
             }
             catch
             {
-                color = new Color();
+                color = default(Color);
 
                 return false;
             }
@@ -45,14 +45,7 @@ namespace OpenXmlPowerTools
 
         public static bool IsValidName(string name)
         {
-            try
-            {
-                return Color.FromName(name).IsNamedColor;
-            }
-            catch
-            {
-                return false;
-            }
+            return TryFromName(name, out _);
         }
     }
 }

@@ -40,7 +40,7 @@ namespace OpenXmlPowerTools
 
     public class MetricsGetter
     {
-        protected static Lazy<Graphics> Graphics {
+        private static Lazy<Graphics> Graphics {
             get
             {
                 return new Lazy<Graphics>(() =>

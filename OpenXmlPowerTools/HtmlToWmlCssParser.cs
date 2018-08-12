@@ -833,8 +833,7 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
             }
             else
             {
-                Color c;
-                if (ColorParser.TryFromName(m_value, out c))
+                if (ColorParser.TryFromName(m_value, out var c))
                 {
                     return c;
                 }
@@ -1644,8 +1643,7 @@ namespace OpenXmlPowerTools.HtmlToWml.CSS
             }
             else
             {
-                Color c;
-                if (ColorParser.TryFromName(m_val, out c))
+                if (ColorParser.TryFromName(m_val, out var c))
                 {
                     return c;
                 }
